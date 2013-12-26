@@ -1,0 +1,33 @@
+CI project proposal: Memetic Algorithms(MA) applied to clustering 
+=================================================================
+The objective of the project will be the implementation and evaluation of a new MA applied to clustering of networks.
+This algorithm will combine two existing algorithms: COMB-MA and MEME-NET, taking from each of them their simpler parts.
+In the case of COMB-MA the x-over operator and in the case of MEME-NET the population initialization method.
+The mutation will be defined to compensate for the lack of exploration or explotation that, mainly, the x-over may introduce.
+As an additional improvement, the x-over operator will be modified to apply some domain knowledge on clustering, i.e. use of individual cluster modularity. The use of informed criteria (vs. random ) in the x-over operator is a research topic but not many papers exist on the literature. MA are focused on the mutation phase.
+The emphasis will be on keeping all the algorithms simple (linear complexity) except for the calculus required to "inform" the x-over, Q modularity.
+ 
+Genetic algorithm scheme(summary)
+---------------------------------
+initialization: alpha random joint of neighbours (MEME-NET)
+selection: will be fix and chosen among the two options proposed
+x-over: random choice of parents clusters (COMB-MA) with GPX (greedy partition x-over) --> apply modularity for each cluster + GPX
+mutation: as required to keep exploration-explotation compensated
+replacement : will be fix and chosen among the two options proposed (as required to keep population size constant)
+
+Evaluation
+----------
+Being clustering an unsupervised method depending on the nature of the problem, the performance of the algorithm can not be measured following the Train-Validate-Test approach common in other ML techniques. Instead, the algorithms, stochastic by definition (initialization and mutation in our scheme) will be executed a large number of times and for each execution some metrics will be obtained:
+* modularity and mutual information, as a measure of the clustering quality and similarity with the known ground truth(when available)
+* execution time and number of generations, as a measure of the algorithm computational performance
+From the data collected, an statistical relevance test of the results will be made (avg, std, max, t-test) and analyzed.
+The datasets to benchmark the algorithm versus the references will be chosen among the used in the papers to report results, that in addition are well known datasets: Karate Club, Dolphins, US political books... At least one simple dataset and one more complex dataset will be evaluated. 
+
+Tools
+-----
+No framework library on GA will be used. The language will be either Java or Python (using the NetworkX library probably).
+
+References
+----------
+Gong, M., et al. (2011). "Memetic algorithm for community detection in networks." Physical review E 84(5): 056101.
+Gach, O. and J.-K. Hao (2012). A memetic algorithm for community detection in complex networks. Parallel Problem Solving from Nature-PPSN XII, Springer: 327-336.

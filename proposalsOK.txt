@@ -1,0 +1,197 @@
+SWARM INTELLIGENCE FOR COUNTING THE DEGREES OF SEPARATION IN TWITTER
+Àlex Pardo and David Sánchez
+
+Status: OK
+Comments: Very interesting topic. Do not try to confirm the rule too
+much, just do the project and see what comes out ...
+
+CONWAY’S GAME OF LIFE THROUGH A GENETIC ALGORITHM
+Stefan Ruseti
+
+Status: OK
+Comments: Quite interesting, but needs a clear specification of
+project goals. Also a small theoretical study?
+
+GENETIC ALGORITHMS IN THE GENERATION OF NORMS OF A VIRTUAL COMMUNITY
+Iosu Mendizabal and Tobias Faass
+
+Status: OK
+Comments: Needs (and critically depends on) a useful specification of
+how to check validity of the norms, but probably you know how to
+handle this
+
+OBTENTION OF GOOD DISCRIMINANT FEATURES TO STUDY LINGUISTIC VARIATION
+IN ARAB DOCUMENTS 
+Miguel Betanzos
+
+Status: OK 
+Comments: Feature selection is a hot and diverse topic. It
+can be carried out with ANNs/GAs or using filters before
+discrimination takes place. I have some experience on this (maybe I
+can be of help in its application to the current corpus). Notice also
+that different targets (authors, literary genres, times, ...) may
+require different features
+
+A SYSTEM FOR AUTONOMOUS NAVIGATION AND ITS APPLICATION TO ROBOTICS
+Albert Busqué and Marc Bolaños
+
+Status: OK 
+Comments: Very interesting topic. My only concern is about
+speed. Probably the system needs to work in real time. Can the
+Evolutionary Algorithm meet this requirement? Can you make the system
+fully adaptive (i.e. react in real-time to changes in goals: where do
+the robot has to move)?
+
+IDENTIFYING SEXUAL PREDATOR BEHAVIOR IN CHAT CONVERSATIONS
+Claudia Elena Cardei
+
+Status: OK 
+Comments: Very exciting topic. It is also a delicate one. You should
+try not to raise false alarms (false positives) and at the same time
+not to bypass real threats (false negatives). This is really a machine
+learning topic and seems far from trivial (unbalanced classes? small
+sample sizes?). Rather than comparing the accuracy of different
+methods, may I suggest to focus in one of them (say, the SVM) and try
+to come up with the best possible model? Better than state-of-the-art?
+
+MEMETIC ALGORITHMS APPLIED TO CLUSTERING
+José A. Magaña
+
+Status: OK 
+Comments: We already talked about it. Just remember my advice on a
+step by step analysis so you can assess the changes in performance and
+hopefully link them to the different decisions
+
+NEURAL NETWORKS APPLIED TO COMPUTER VISION
+Pablo Pardo and Jeroni Carandell
+
+Status: IN PROCESS 
+Comments: If you are able to get some data from your CV subject, then
+we can generate a viable project. There is one available project in
+object recognition (CIFAR). Please get in touch with me if you feel it.
+
+<ONE OF THE AVAILABLE CI PROJECTS>
+Nils Kunze
+
+Status: IN PROCESS 
+Comments: OK. The list of available projects will be ready this
+week. Please choose one (Ninja packing?) and let me know. Thanks!
+
+<ONE OF THE AVAILABLE CI PROJECTS> or
+GALAXY CLASSIFICATION WITH NEURAL NETWORKS
+Anna Guitart
+
+Status: IN PROCESS 
+Comments: OK. The topic of galaxy classification looks very exciting
+to me (I come from machine learning, I can give you some advice if
+needed), and if you have real data this would make a wonderful
+project. Just a bit worried about the big amount of previous
+work. Although you are not required to do a research project,
+obviously you need to consult previous (very) related work. Otherwise
+you can choose one of the available projects and let me know
+
+COMPARISON OF THE MLP AND WAVELET NETWORKS FOR STOCK MARKET INDEX FORECASTING
+Jordi Rosés
+
+Status: IN PROCESS 
+Comments: OK. We already talked about it. Just consider that you do
+not need to use your own implementation. I prefer that you attack the
+problem with reliable software and do a nice study than to struggle
+with your code and do not get a project at all.
+
+COMPARISON BETWEEN SWARM INTELLIGENCE AND EVOLUTIONARY COMPUTATION IN SENSE OF USAGE AREAS AND ADVANTAGES
+Koray Kayır
+
+Status: IN PROCESS 
+Comments: Not sure. Your proposal seems a bit oversized for a term
+project. Theoretical approaches get very complicated and would make a
+PhD thesis. Usage areas, strengths, weaknesses, and advantages are not
+easy to isolate and I do not want you to end up writing a "compilation
+of papers" project. Please re-think it and simplify the scope.
+
+AUTOMATIC PLAYLIST GENERATION USING EVOLUTIONARY ALGORITHMS
+Filip Manisor
+
+Status: OK
+Comments: Nice topic, quite modern! Not sure whether genetic
+algorithms fit this problem so well ... (just because they handle
+bitstrings is not enough). I am also worried about the fitness
+function: it should be automatizable and the less subjective possible
+(otherwise it will be a noisy one, well, maybe this is better in this
+case). Be sure to compare against previous work, and be original!
+
+<ONE OF THE AVAILABLE CI PROJECTS>
+Javier Poveda
+
+Status: IN PROCESS 
+Comments: There is a project available on object recognition (CIFAR,
+maybe you can take it.
+
+AN INVESTIGATION INTO THE RELATIONSHIP BETWEEN ERROR CORRECTING CODES
+AND NEURAL NETWORKS
+Lorenzo Candeago and Denis Ergashbaev
+
+Status: OK
+Comments: Very interesting topic. Please try to keep it manageable and
+do not work in an isolated way! Otherwise the theoretical and
+practical parts will have little relation!
+
+CUSTOMER CHURN PREDICTION USING NEURAL NETWORKS
+Daniel Horowitz and Rodrigo Weffer
+
+Status: IN PROCESS 
+Comments: Good topic, also very useful in practice. You critically
+depend on the quality of the databases. I do not know what kind of
+neural networks you are going to use. Please specify.
+
+NEURAL NETWORKS FOR THE OTHELLO GAME
+Andreas Roessler
+
+Status: IN PROCESS
+Comments: We already talked about it. Your project is far from
+trivial, there maybe a lot of critical decisions that will affect the
+quality of your system (like kind of neural network, how to generate
+training data, etc). Please submit a more detailed proposal. Please
+look hard for previous work.
+
+STUDY ON USING OR DISCARDING EVOLUTIONARY ALGORITHM ON NEURAL
+NETWORK WEIGHTS
+Gerard Canal and Daniel Padilla
+
+Status: IN PROCESS 
+Comments: Your proposal seems very oversized for a term project (and
+oversized in general). I have some experience on this topic and it
+will probably exceed your time and efforts. I suggest that you
+concentrate on ONE issue (learning speed, problem hardness, influence
+of sample size, criticality of parameter values, number of inputs,
+etc) and study it. You can design an artificial problem specifically
+for that issue. Please refer to the "Tips for Experimental Work"
+guide! Python (with or without Knime) is OK.
+
+CRIMINAL PREDICTIVE PATTERNS USING NEURAL NETWORK TECHNIQUES WITH A GIS APPROACH
+Pedro Robles
+
+Status: OK
+Comments: Good idea. My only concern is about the specific kinds of
+neural networks you plan to use. Supervised/unupervised, or both?
+Moreover, the papers you attach bear only an indirect relation with your
+proposal.
+
+<ONE OF THE AVAILABLE CI PROJECTS>
+Alvise Memo
+
+Status: IN PROCESS
+Comments: I think we talked about it in class. I do not consider
+heuristic search algorithms (like A*) a valid CI topic (this is purely
+AI). Regarding neural networks for recognizing handwritten letters,
+there is a project available on object recognition (CIFAR), maybe you
+can take it or make a specific proposal.
+
+<ONE OF THE AVAILABLE CI PROJECTS>
+U. Kibongui
+
+Comments: you mentioned a project related to neural networks. Please
+choose one (CIFAR or Titanic) and let me know. Thanks!
+
+O. Amorós, A. Wurl and J. Moreno
+Status: UNKNOWN
