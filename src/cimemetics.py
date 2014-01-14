@@ -32,31 +32,26 @@ dgt3={1: [1, 5, 6, 7, 9, 13, 17, 19, 22, 25, 26, 27, 31, 32, 41, 48, 54, 56, 57,
      5: [3, 8, 36, 39, 59]}
 
 # TODO's
-# clusters are not 1 to n: improve offspring--> not important
-# parameters to tune: pop_size, MAX_GENERATIONS, cmin, Pm
+# max_intersect>1 would cause that splitted nodes are never added to a community if they only have one edge (leaves)
+# cmin=10 to 0.01 --> makes the results much worse
 # NMI
 # max_eri: too high (76)
 # consider large clusters on improve_offspring
 
-#parameters of the GA
-#dejong parameters
-#(population_size,MAX_GENERATIONS,Pm)
-default=(10,200,0.2,'default.txt')
-dejong=(50,1000,0.001,'dejong.txt')
-grefenstette=(30,1000,0.01,'grefenstette.txt')
-microga1=(5,100,0.04,'microga1.txt')
-microga2=(5,100,0.02,'microga2.txt')
-paramsGA=[default,dejong,grefenstette,microga1,microga2]
+
 #used parameters
 population_size=0
 MAX_GENERATIONS=0      
 Pm=0
 init_iter_factor=0.2  # from the paper
-cmin=10
-nreps=10
+cmin=0.01 #--> choose_parent infinite loop
+nreps=20
 #problem parameters
 problem_name=''
 generations=0
+mutations=0
+creplacements=0
+wreplacements=0
 init_iter=0         # number of iterations in initialization (n_nodes*init_iter_factor)
 f=0
 ln=0
@@ -64,6 +59,42 @@ graph_weight=0
 gt=dict()
 gtmod=0.0
 nedges=0
+
+#parameters of the GA
+#dejong parameters
+#(population_size,MAX_GENERATIONS,Pm,cmin)
+default=(10,200,0.2,cmin,'default.txt')
+dejong=(50,1000,0.001,cmin,'dejong.txt')      #best option
+dejong01=(50,1000,0.001,2.0,'dejong01.txt')  #cmin
+dejong02=(50,1000,0.001,2.6,'dejong02.txt')
+dejong03=(50,1000,0.001,3.0,'dejong03.txt')
+dejong04=(50,1000,0.001,0.5,'dejong04.txt')
+dejong05=(50,1000,0.001,0.1,'dejong05.txt')
+dejong06=(50,1000,0.001,4.0,'dejong06.txt')
+dejong07=(50,1000,0.001,5.0,'dejong07.txt')
+dejong08=(50,1000,0.001,6.0,'dejong08.txt')
+dejong11=(50,2000,0.001,cmin,'dejong11.txt')  #MAX_GENERATIONS
+dejong12=(50,3000,0.001,cmin,'dejong12.txt')
+dejong21=(100,1000,0.001,cmin,'dejong21.txt') #population_size
+dejong22=(150,1000,0.001,cmin,'dejong22.txt')
+dejong23=(200,1000,0.001,cmin,'dejong23.txt')
+dejong24=(300,1000,0.001,cmin,'dejong24.txt')
+dejong31=(50,1000,0.01,cmin,'dejong31.txt')   #Pm
+dejong32=(50,1000,0.05,cmin,'dejong32.txt')
+dejong33=(50,1000,0.1,cmin,'dejong32.txt')
+dejong34=(50,1000,0.9,cmin,'dejong34.txt')
+dejong35=(50,1000,0.0,cmin,'dejong35.txt')
+grefenstette=(30,1000,0.01,cmin,'grefenstette.txt') # all options
+microga1=(5,100,0.04,cmin,'microga1.txt')
+microga2=(5,100,0.02,cmin,'microga2.txt')
+
+#paramsGA=[dejong,dejong01,dejong02,dejong03,dejong04,dejong05]
+#paramsGA=[dejong06,dejong07,dejong08]
+#paramsGA=[dejong11,dejong12]
+#paramsGA=[dejong21,dejong22,dejong33,dejong24]
+#paramsGA=[dejong31,dejong32,dejong33,dejong34,dejong35]
+paramsGA=[default,dejong]#,grefenstette,microga1,microga2]
+
 
 def calc_graph_weight(graph):
     global graph_weight
@@ -216,14 +247,16 @@ def choose_parent(population,total_q):
     for p in population:
         q_acc+=p[2]
         if (q_acc>=r):
+            population.remove(p)
             return p
     return None
 
 def choose_parents(population, total_q):
-    p1=choose_parent(population,total_q)
-    p2=p1
-    while (p1==p2):
-        p2=choose_parent(population,total_q)
+    p1=choose_parent(population,total_q)  
+    p2=choose_parent(population,total_q-p1[2])
+    # we do not verify if the two elements are the same
+    population.append(p2)
+    population.append(p1)
     return (p1,p2)
 
 def combine_lists(p1,p2):
@@ -233,6 +266,10 @@ def combine_lists(p1,p2):
     l2=zip(p2.values(),k2,[1]*len(k2))
     li=sorted(l1+l2, reverse=True)
     return li
+
+def show_population(population):
+    for sol in population:
+        print sol[2]
     
 def combine_parents(graph, p1, p2):
     #init offspring
@@ -249,7 +286,7 @@ def combine_parents(graph, p1, p2):
             update_parent(p,d,c,nodes)
             update_offspring(graph,offspring,nodes,cluster_nr)
             cluster_nr+=1    
-    return offspring  # +0.5 to force it positive
+    return offspring  
 
 def update_parent(p,d,c,nodes):
     wl=c[2]
@@ -273,16 +310,18 @@ def improve_offspring(graph, offspring):
     # are in one of the clusters
     # what to do with large clusters???
     keys=offspring[1].keys()
+    keys_shuffle=list(offspring[1].keys())
+    random.shuffle(keys_shuffle)
     for cluster_id in keys:
         nodes=offspring[1][cluster_id]
-        if (len(nodes)==1 and Pm<random.random()):
+        if ( len(nodes)==1 and Pm<random.random() ): # spare nodes
             max_intersect=-1
             max_cluster=-1
             e=nodes[0]
             nghbrs=graph.neighbors(e)
             nghbrs_set=set(nghbrs)
-            for c in offspring[1].keys():
-                if c<>cluster_id:
+            for c in keys_shuffle:
+                if c<>cluster_id and c in offspring[1]:
                     n=offspring[1][c]
                     if (len(n)>1):
                         intersect=[val for val in n if val in nghbrs_set]
@@ -290,11 +329,10 @@ def improve_offspring(graph, offspring):
                         if len_intersect>max_intersect:
                             max_intersect=len_intersect
                             max_cluster=c
-                        elif (len_intersect==max_intersect and random.random()<0.5):
-                            max_intersect=len_intersect
-                            max_cluster=c
             # change to this c
             if (max_intersect>-1):
+                global mutations
+                mutations+=1
                 offspring[1][max_cluster].append(e)
                 del offspring[1][cluster_id]
                 offspring[0][e]=max_cluster
@@ -312,17 +350,19 @@ def update_population(graph, population, offspring):
     # if d(Io,Ic) <dmin and Q(Io) >= Q(Ic), then Io replaces Ic in P;
     # otherwise,if Q(Io) >= Q(Iw)then Io replaces Iw in P.
     # the best will always survive
-    (cm,c,wm,w)=ERI_selection(graph, population, offspring)
-    #print cm[2],c,wm[2],w
-    if (c<cmin):
-        if (cm[2]<offspring[2]):
-            population.remove(cm)
+    if offspring not in population:
+        (cm,c,wm,w)=ERI_selection(graph, population, offspring)
+        if (c<cmin):
+            if (cm[2]<offspring[2]):  
+                population.remove(cm)
+                population.append(offspring)
+                global creplacements
+                creplacements+=1
+        elif (wm[2]<offspring[2]):
+            population.remove(wm)
             population.append(offspring)
-            #print 'replace c'
-    elif (wm[2]<offspring[2]):
-        population.remove(wm)
-        population.append(offspring)
-        #print 'replace w'
+            global wreplacements
+            wreplacements+=1
     total_q=calculate_total_q(population)
     return total_q
 
@@ -348,6 +388,7 @@ def run(graph):
         update_best(offspring)    
         total_q=update_population(graph,population,offspring)
         #partial_results(graph, offspring, population)
+        #show_population(population)
     pass
 
 def partial_results(graph, offspring, population):
@@ -384,7 +425,7 @@ def partial_results(graph, offspring, population):
     # print generations, 'offspring', offspring[2], 'best', best_q
     # n_gen min_mod best_mod /best_mod-min_mod/ eri_c eri_w /eri_c-eri_w/
     my_str='{0};{1};{2};{3};{4};{5};{6};{7};{8}'.format(generations,min_mod,max_mod,range_mod,min_eri,max_eri,range_eri,min_k,max_k)
-    #print my_str
+    print my_str
     f.write(my_str+'\n')
     
 def results(graph):
@@ -395,7 +436,7 @@ def results(graph):
     # eri dgt, dgt2 = 0.2012
     #d_BKR2=ERI_member(graph, (rereverse(dgt2), dgt2))
     #eri2=ERI(d_BKR,d_BKR2)
-    results='BESTMOD;{1};;ERI;{2}'.format(gtmod,best_q,eri)
+    results='BESTMOD;{0};;ERI;{1};;MUTATIONS;{2};CREPL;{3};WREPL;{4}'.format(best_q,eri,mutations,creplacements,wreplacements)
     global results_num
     show(results)
     results_best_q.append(best_q)
@@ -407,7 +448,7 @@ def show(mystr):
 
 def fileresults(paramsGA):
     global f
-    filename=problem_name+(paramsGA[3])
+    filename=problem_name+(paramsGA[4])
     f=open(filename,'w')
     show(filename)
     global results_best_q
@@ -423,7 +464,7 @@ def closefile():
     eriMean=numpy.mean(numpy_eri)
     eriStdev=numpy.std(numpy_eri)
     zeros=nreps-numpy.count_nonzero(numpy_eri)
-    results='BESTMOD;ZEROS:{0}:MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4}'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev)
+    results='BESTMOD;ZEROS:{0};MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4}'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev)
     show(results)
     f.close()
 
@@ -431,15 +472,23 @@ def init_paramsGA(paramsGA):
     global population_size
     population_size=paramsGA[0]
     global MAX_GENERATIONS
-    MAX_GENERATIONS=paramsGA[1] 
+    MAX_GENERATIONS=paramsGA[1]
     global Pm
     Pm=paramsGA[2]
-    params='SIZE;{0};;MAXGENS;{1};;Pm;{2};'.format(population_size, MAX_GENERATIONS, Pm)
+    global cmin
+    cmin=paramsGA[3]
+    params='SIZE;{0};;MAXGENS;{1};;Pm;{2};;CMIN;{3}'.format(population_size, MAX_GENERATIONS, Pm, cmin)
     show(params)
 
 def init_exec():
     global generations
     generations=0
+    global mutations
+    mutations=0
+    global creplacements
+    creplacements=0
+    global wreplacements
+    wreplacements=0
     global best
     best=dict()
     global best_q
