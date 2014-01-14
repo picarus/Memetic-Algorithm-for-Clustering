@@ -44,7 +44,6 @@ population_size=0
 MAX_GENERATIONS=0      
 Pm=0
 init_iter_factor=0.2  # from the paper
-cmin=0.01 #--> choose_parent infinite loop
 nreps=20
 #problem parameters
 problem_name=''
@@ -63,37 +62,29 @@ nedges=0
 #parameters of the GA
 #dejong parameters
 #(population_size,MAX_GENERATIONS,Pm,cmin)
-default=(10,200,0.2,cmin,'default.txt')
-dejong=(50,1000,0.001,cmin,'dejong.txt')      #best option
-dejong01=(50,1000,0.001,2.0,'dejong01.txt')  #cmin
-dejong02=(50,1000,0.001,2.6,'dejong02.txt')
-dejong03=(50,1000,0.001,3.0,'dejong03.txt')
-dejong04=(50,1000,0.001,0.5,'dejong04.txt')
-dejong05=(50,1000,0.001,0.1,'dejong05.txt')
-dejong06=(50,1000,0.001,4.0,'dejong06.txt')
-dejong07=(50,1000,0.001,5.0,'dejong07.txt')
-dejong08=(50,1000,0.001,6.0,'dejong08.txt')
-dejong11=(50,2000,0.001,cmin,'dejong11.txt')  #MAX_GENERATIONS
-dejong12=(50,3000,0.001,cmin,'dejong12.txt')
-dejong21=(100,1000,0.001,cmin,'dejong21.txt') #population_size
-dejong22=(150,1000,0.001,cmin,'dejong22.txt')
-dejong23=(200,1000,0.001,cmin,'dejong23.txt')
-dejong24=(300,1000,0.001,cmin,'dejong24.txt')
-dejong31=(50,1000,0.01,cmin,'dejong31.txt')   #Pm
-dejong32=(50,1000,0.05,cmin,'dejong32.txt')
-dejong33=(50,1000,0.1,cmin,'dejong32.txt')
-dejong34=(50,1000,0.9,cmin,'dejong34.txt')
-dejong35=(50,1000,0.0,cmin,'dejong35.txt')
-grefenstette=(30,1000,0.01,cmin,'grefenstette.txt') # all options
-microga1=(5,100,0.04,cmin,'microga1.txt')
-microga2=(5,100,0.02,cmin,'microga2.txt')
+default=(10,200,0.2,'default.txt')
+dejong=(50,1000,0.001,'dejong.txt')      #best option
+dejong11=(50,2000,0.001,'dejong11.txt')  #MAX_GENERATIONS
+dejong12=(50,3000,0.001,'dejong12.txt')
+dejong21=(100,1000,0.001,'dejong21.txt') #population_size
+dejong22=(150,1000,0.001,'dejong22.txt')
+dejong23=(200,1000,0.001,'dejong23.txt')
+dejong24=(300,1000,0.001,'dejong24.txt')
+dejong31=(50,1000,0.01,'dejong31.txt')   #Pm
+dejong32=(50,1000,0.05,'dejong32.txt')
+dejong33=(50,1000,0.1,'dejong32.txt')
+dejong34=(50,1000,0.9,'dejong34.txt')
+dejong35=(50,1000,0.0,'dejong35.txt')
+grefenstette=(30,1000,0.01,'grefenstette.txt') # all options
+microga1=(5,100,0.04,'microga1.txt')
+microga2=(5,100,0.02,'microga2.txt')
 
 #paramsGA=[dejong,dejong01,dejong02,dejong03,dejong04,dejong05]
 #paramsGA=[dejong06,dejong07,dejong08]
 #paramsGA=[dejong11,dejong12]
 #paramsGA=[dejong21,dejong22,dejong33,dejong24]
 #paramsGA=[dejong31,dejong32,dejong33,dejong34,dejong35]
-paramsGA=[default,dejong]#,grefenstette,microga1,microga2]
+paramsGA=[default,dejong,grefenstette,microga1,microga2]
 
 
 def calc_graph_weight(graph):
@@ -320,7 +311,7 @@ def improve_offspring(graph, offspring):
             e=nodes[0]
             nghbrs=graph.neighbors(e)
             nghbrs_set=set(nghbrs)
-            for c in keys_shuffle:
+            for c in keys_shuffle:   # shuffle to avoid determinism and having to introduce a random
                 if c<>cluster_id and c in offspring[1]:
                     n=offspring[1][c]
                     if (len(n)>1):
@@ -329,7 +320,7 @@ def improve_offspring(graph, offspring):
                         if len_intersect>max_intersect:
                             max_intersect=len_intersect
                             max_cluster=c
-            # change to this c
+            # change to this c-luster
             if (max_intersect>-1):
                 global mutations
                 mutations+=1
@@ -352,7 +343,7 @@ def update_population(graph, population, offspring):
     # the best will always survive
     if offspring not in population:
         (cm,c,wm,w)=ERI_selection(graph, population, offspring)
-        if (c<cmin):
+        if (True):#(c<cmin):
             if (cm[2]<offspring[2]):  
                 population.remove(cm)
                 population.append(offspring)
@@ -448,7 +439,7 @@ def show(mystr):
 
 def fileresults(paramsGA):
     global f
-    filename=problem_name+(paramsGA[4])
+    filename=problem_name+(paramsGA[3])
     f=open(filename,'w')
     show(filename)
     global results_best_q
@@ -469,15 +460,14 @@ def closefile():
     f.close()
 
 def init_paramsGA(paramsGA):
+    random.seed(0)                              # initialization for repeatibility
     global population_size
     population_size=paramsGA[0]
     global MAX_GENERATIONS
     MAX_GENERATIONS=paramsGA[1]
     global Pm
     Pm=paramsGA[2]
-    global cmin
-    cmin=paramsGA[3]
-    params='SIZE;{0};;MAXGENS;{1};;Pm;{2};;CMIN;{3}'.format(population_size, MAX_GENERATIONS, Pm, cmin)
+    params='SIZE;{0};;MAXGENS;{1};;Pm;{2};'.format(population_size, MAX_GENERATIONS, Pm)
     show(params)
 
 def init_exec():
@@ -510,6 +500,7 @@ def init(graph):
     show(my_str)
 
 def problem(problem_name):
+    
     graph=loadData(problem_name)                # load a graph
     for settings in xrange(len(paramsGA)):
         fileresults(paramsGA[settings])
@@ -522,7 +513,7 @@ def problem(problem_name):
         closefile()   
 
 def main():
-    random.seed(0)                              # initialization for repeatibility
+    
     problem(karate_club)
     #problem(dolphins)         
     
