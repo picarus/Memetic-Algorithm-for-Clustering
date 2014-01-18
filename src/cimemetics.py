@@ -33,9 +33,7 @@ dgt3={1: [1, 5, 6, 7, 9, 13, 17, 19, 22, 25, 26, 27, 31, 32, 41, 48, 54, 56, 57,
 
 # TODO's
 # max_intersect>1 would cause that splitted nodes are never added to a community if they only have one edge (leaves)
-# cmin=10 to 0.01 --> makes the results much worse
-# NMI
-# max_eri: too high (76)
+# quick evolution of the modularity
 # consider large clusters on improve_offspring
 
 
@@ -47,6 +45,8 @@ init_iter_factor=0.2  # from the paper
 nreps=20
 #problem parameters
 problem_name=''
+error=0
+ok=0
 generations=0
 mutations=0
 creplacements=0
@@ -63,35 +63,37 @@ nedges=0
 #dejong parameters
 #(population_size,MAX_GENERATIONS,Pm,cmin)
 default=(10,200,0.2,'default.txt')
-dejong=(50,1000,0.001,'dejong.txt')      #best option
-dejong11=(50,2000,0.001,'dejong11.txt')  #MAX_GENERATIONS
-dejong12=(50,3000,0.001,'dejong12.txt')
-dejong21=(100,1000,0.001,'dejong21.txt') #population_size
+dejong=(50,1000,0.001,'dejong.txt')             #best option
+dejong11=(50,2000,0.001,'dejong11.txt')         #MAX_GENERATIONS
+dejong12=(50,4000,0.001,'dejong12.txt')
+dejong13=(50,8000,0.001,'dejong13.txt')
+dejong21=(100,1000,0.001,'dejong21.txt')        #population_size
 dejong22=(150,1000,0.001,'dejong22.txt')
 dejong23=(200,1000,0.001,'dejong23.txt')
 dejong24=(300,1000,0.001,'dejong24.txt')
-dejong31=(50,1000,0.01,'dejong31.txt')   #Pm
+dejong30=(50,1000,0.0,'dejong30.txt')           #Pm
+dejong31=(50,1000,0.01,'dejong31.txt')   
 dejong32=(50,1000,0.05,'dejong32.txt')
-dejong33=(50,1000,0.1,'dejong32.txt')
-dejong34=(50,1000,0.9,'dejong34.txt')
-dejong35=(50,1000,0.0,'dejong35.txt')
-grefenstette=(30,1000,0.01,'grefenstette.txt') # all options
+dejong33=(50,1000,0.1,'dejong33.txt')
+dejong34=(50,1000,0.2,'dejong34.txt')
+dejong35=(50,1000,0.4,'dejong35.txt')
+dejong36=(50,1000,0.6,'dejong36.txt')
+dejong37=(50,1000,0.9,'dejong37.txt')
+grefenstette=(30,1000,0.01,'grefenstette.txt')  # all options
 microga1=(5,100,0.04,'microga1.txt')
 microga2=(5,100,0.02,'microga2.txt')
 
-#paramsGA=[dejong,dejong01,dejong02,dejong03,dejong04,dejong05]
-#paramsGA=[dejong06,dejong07,dejong08]
+paramsGA=[dejong]
 #paramsGA=[dejong11,dejong12]
-#paramsGA=[dejong21,dejong22,dejong33,dejong24]
-#paramsGA=[dejong31,dejong32,dejong33,dejong34,dejong35]
-paramsGA=[default,dejong,grefenstette,microga1,microga2]
-
+#paramsGA=[dejong21,dejong22,dejong23,dejong24]
+#paramsGA=[dejong30,dejong31,dejong32,dejong33,dejong34,dejong35,dejong36,dejong37]
+#paramsGA=[default,dejong,grefenstette,microga1,microga2]
 
 def calc_graph_weight(graph):
     global graph_weight
     graph_weight=0
     for e in graph.edges_iter():
-        w=get_weight(e)
+        w=get_weight(e)         # we keep it like that to use it in weighted networks in the future
         graph_weight+=w
     graph_weight*=2
 
@@ -180,8 +182,55 @@ def ERI_selection(graph, population, offspring):
             cm=member
     return (cm,c,wm,w)
 
-def NMI():
-    pass
+def NMI(graph, individual1,individual2):
+    cm=confussion_matrix(individual1[1],individual2[1])
+    return NMICM(graph, cm)
+
+def NMICM(graph,cm):
+    (r,c)=cm.shape
+    cmr=numpy.zeros(shape=(r,),dtype=numpy.float)
+    cmc=numpy.zeros(shape=(c,),dtype=numpy.float)
+    n=float(graph.number_of_nodes())
+
+    for i in xrange(r):
+        for j in xrange(c):
+            cmr[i]+=cm[i][j]
+            cmc[j]+=cm[i][j]
+           
+    denominator=0
+    
+    for i in xrange(r):
+        if (cmr[i]>0):
+            denominator+=cmr[i]*numpy.log(cmr[i]/n)
+        
+    for j in xrange(c):
+        if (cmc[j]>0):
+            denominator+=cmc[j]*numpy.log(cmc[j]/n)
+
+    numerator=0    
+    for i in xrange(r):
+        for j in xrange(c):
+            if (cm[i][j]>0):
+                numerator+=cm[i][j]*numpy.log(cm[i][j]*n/cmr[i]/cmc[j])
+    
+    return -2*numerator/denominator
+
+def confussion_matrix(individual1, individual2):
+    l1=len(individual1)
+    l2=len(individual2)
+    confussion_matrix=numpy.zeros(shape=(l1,l2,), dtype=numpy.float)
+    i=0
+    k1=individual1.keys()
+    k2=individual2.keys()
+    for c1 in k1:
+        j=0
+        e1=individual1[c1]
+        for c2 in k2:
+            e2=individual2[c2]
+            confussion_matrix[i][j]=len(set(e1) & set(e2))
+            j+=1
+        i+=1
+    return confussion_matrix
 
 def loadData(nameGraph):
     global gt
@@ -324,38 +373,57 @@ def improve_offspring(graph, offspring):
             if (max_intersect>-1):
                 global mutations
                 mutations+=1
+                old_mod=offspring[2]
+                candidate=tuple(dict(offspring[0]),dict(offspring[1]))
                 offspring[1][max_cluster].append(e)
                 del offspring[1][cluster_id]
                 offspring[0][e]=max_cluster
+                offspring=modularity(graph,offspring[0],offspring[1])
+                if (old_mod>offspring[2]):
+                    global error
+                    error+=1
+                else:
+                    global ok
+                    ok+=1
+                     
 
 def update_best(solution):
     global best_q
-    q=solution[2]
+    q=solution[2]  # modularity
     if q > best_q:
         best_q=q
         global best
         best=solution
 
-def update_population(graph, population, offspring):
+def update_population3(graph, population, offspring):
+    if offspring not in population:
+        update_population2(graph, population, offspring)    
+
+def update_population2(graph, population, offspring):
+    (cm,c,wm,w)=ERI_selection(graph, population, offspring)
+    if ((c<0.01) and (cm[2]<offspring[2])): # really close  
+        population.remove(cm)
+        population.append(offspring)
+        global creplacements
+        creplacements+=1
+    elif (wm[2]<offspring[2]):
+        population.remove(wm)
+        population.append(offspring)
+        global wreplacements
+        wreplacements+=1
+
+def update_population1(graph, population, offspring):
     # eri vs d:
     # if d(Io,Ic) <dmin and Q(Io) >= Q(Ic), then Io replaces Ic in P;
     # otherwise,if Q(Io) >= Q(Iw)then Io replaces Iw in P.
     # the best will always survive
     if offspring not in population:
         (cm,c,wm,w)=ERI_selection(graph, population, offspring)
-        if (True):#(c<cmin):
-            if (cm[2]<offspring[2]):  
-                population.remove(cm)
-                population.append(offspring)
-                global creplacements
-                creplacements+=1
-        elif (wm[2]<offspring[2]):
-            population.remove(wm)
+        if (cm[2]<offspring[2]):  
+            population.remove(cm)
             population.append(offspring)
-            global wreplacements
-            wreplacements+=1
-    total_q=calculate_total_q(population)
-    return total_q
+            global creplacements
+            creplacements+=1
 
 def end_criterion():
     global generations
@@ -370,19 +438,20 @@ def calculate_total_q(population):
 
 def run(graph):
     (population,total_q)=initialize_population(graph)
-    #print total_q, best_q
+    #partial_results(graph, population)
     while (not end_criterion()):
         (p1,p2)=choose_parents(population, total_q)
         offspring=combine_parents(graph,p1,p2)
+        offspring=modularity(graph,offspring[0],offspring[1])  # remove later
         improve_offspring(graph,offspring)
         offspring=modularity(graph,offspring[0],offspring[1])
         update_best(offspring)    
         total_q=update_population(graph,population,offspring)
-        #partial_results(graph, offspring, population)
+        #partial_results(graph, population)
         #show_population(population)
     pass
 
-def partial_results(graph, offspring, population):
+def partial_results(graph, population):
     min_mod=2
     max_mod=-1
     min_eri=nedges*4
@@ -413,9 +482,7 @@ def partial_results(graph, offspring, population):
         eri_list.append(d_member)    
     range_mod=max_mod-min_mod
     range_eri=max_eri-min_eri
-    # print generations, 'offspring', offspring[2], 'best', best_q
-    # n_gen min_mod best_mod /best_mod-min_mod/ eri_c eri_w /eri_c-eri_w/
-    my_str='{0};{1};{2};{3};{4};{5};{6};{7};{8}'.format(generations,min_mod,max_mod,range_mod,min_eri,max_eri,range_eri,min_k,max_k)
+    my_str='{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11}'.format(generations,min_mod,max_mod,range_mod,min_eri,max_eri,range_eri,min_k,max_k,mutations,creplacements,wreplacements)
     print my_str
     f.write(my_str+'\n')
     
@@ -430,6 +497,7 @@ def results(graph):
     results='BESTMOD;{0};;ERI;{1};;MUTATIONS;{2};CREPL;{3};WREPL;{4}'.format(best_q,eri,mutations,creplacements,wreplacements)
     global results_num
     show(results)
+    print error, ok
     results_best_q.append(best_q)
     results_eri.append(eri)
 
@@ -455,7 +523,7 @@ def closefile():
     eriMean=numpy.mean(numpy_eri)
     eriStdev=numpy.std(numpy_eri)
     zeros=nreps-numpy.count_nonzero(numpy_eri)
-    results='BESTMOD;ZEROS:{0};MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4}'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev)
+    results='ROUND;ZEROS:{0};MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4}'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev)
     show(results)
     f.close()
 
@@ -471,6 +539,10 @@ def init_paramsGA(paramsGA):
     show(params)
 
 def init_exec():
+    global error
+    error=0
+    global ok
+    ok=0
     global generations
     generations=0
     global mutations
@@ -496,11 +568,10 @@ def init(graph):
     nedges=graph.number_of_edges()
     mod_str='MAXMOD;{0};;NEDGES;{1}'.format(gtmod,nedges)
     show(mod_str)
-    my_str='min_mod;max_mod;range_mod;min_eri;max_eri;range_eri;min_k;max_k;'
+    my_str='generation;min_mod;max_mod;range_mod;min_eri;max_eri;range_eri;min_k;max_k;mutations;crepl;wrepl;'
     show(my_str)
 
 def problem(problem_name):
-    
     graph=loadData(problem_name)                # load a graph
     for settings in xrange(len(paramsGA)):
         fileresults(paramsGA[settings])
@@ -512,8 +583,12 @@ def problem(problem_name):
             results(graph)
         closefile()   
 
+def update_population(graph,population, offspring):
+    update_population1(graph,population, offspring)
+    total_q=calculate_total_q(population)
+    return total_q
+
 def main():
-    
     problem(karate_club)
     #problem(dolphins)         
     
