@@ -1,0 +1,4 @@
+dolphinsgrefenstette17.txt
+SIZE;30;;MAXGENS;128000;;Pm;0.01;
+MAXMOD;1.02851944148;;NEDGES;159
+generation;min_mod;max_mod;range_mod;min_eri;max_eri;range_eri;min_k;max_k;mutations;crepl;wrepl;

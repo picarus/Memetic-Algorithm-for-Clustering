@@ -62,7 +62,6 @@ gtmod=0.0
 nedges=0
 
 #parameters of the GA
-#dejong parameters
 #(population_size,MAX_GENERATIONS,Pm,cmin)
 default=(10,200,0.2,'default.txt')
 dejong=(50,1000,0.001,'dejong.txt')             #best option
@@ -99,12 +98,19 @@ grefenstette37=(30,1000,0.9,'grefenstette37.txt')
 microga1=(5,100,0.04,'microga1.txt')
 microga2=(5,100,0.02,'microga2.txt')
 
+bestparams011=(300,1000,0.01,'bestparams011.txt')
+bestparams021=(300,1000,0.60,'bestparams021.txt')
 bestparams01=(300,8000,0.01,'bestparams01.txt')
 bestparams02=(300,8000,0.60,'bestparams02.txt')
 
 #for dolphins
-paramsGA=[grefenstette,grefenstettedyn,grefenstette13,grefenstette26,grefenstette33,grefenstette36,bestparams01,bestparams02]
+#paramsGA=[grefenstette,grefenstettedyn,grefenstette13,grefenstette26,grefenstette33,grefenstette36,bestparams01,bestparams02]
+#paramsGA=[bestparams011,bestparams021]
+paramsGA=[bestparams02]#,bestparams01]
 
+#paramsGA=[default,dejong,grefenstette,microga1,microga2,grefenstette30,grefenstette31,grefenstette32,grefenstette33,grefenstette34,grefenstette35,grefenstette36,grefenstette37,grefenstette20,grefenstette21,grefenstette22,grefenstette23,grefenstette24,grefenstette25,grefenstette26,grefenstette11,grefenstette12,grefenstette13,grefenstette14,grefenstette15,grefenstette16,grefenstette17]
+#paramsGA=[grefenstette20,grefenstette21,grefenstette22,grefenstette23,grefenstette24,grefenstette25,grefenstette26]
+#paramsGA=[grefenstette30,grefenstette31,grefenstette32,grefenstette33,grefenstette34,grefenstette35,grefenstette36,grefenstette37]
 #paramsGA=[bestparams01,bestparams02]
 #paramsGA=[grefenstette]
 #paramsGA=[grefenstettedyn]
@@ -176,13 +182,15 @@ def modularity_priv(graph, reversedict): # fitness function
     return (q+0.5,mod)  #+0.5 to make it positive
 
 def ERI_member(graph, element):
-    d=dict()
+    # for each edge, we store if the edge has both ends (nodes) in the same cluster
+    d=dict()  
     t=element[0]
     for e in graph.edges_iter():
         d[e]=t[e[0]]==t[e[1]]
     return d
 
 def ERI(do, dm):
+    # count how many times the edges are not in the same cluster for the two partitions(do,dm)
     key_list=do.keys()
     d=0
     for key in key_list:
@@ -191,6 +199,7 @@ def ERI(do, dm):
     return float(d)/float(nedges)
     
 def ERI_selection(graph, population, offspring):
+    # find the closest and furthest ERI-wise elements in the population
     c=2*graph.number_of_edges() #init to double max
     w=-1                        #init to minimum
     cm=tuple()
@@ -424,6 +433,10 @@ def update_population3(graph, population, offspring):
         update_population2(graph, population, offspring)    
 
 def update_population2(graph, population, offspring):
+    # eri vs d:
+    # if d(Io,Ic) <dmin and Q(Io) >= Q(Ic), then Io replaces Ic in P;
+    # otherwise,if Q(Io) >= Q(Iw)then Io replaces Iw in P.
+    # the best will always survive
     (cm,c,wm,w)=ERI_selection(graph, population, offspring)
     if ((c<0.01) and (cm[2]<offspring[2])): # really close  
         population.remove(cm)
@@ -437,11 +450,8 @@ def update_population2(graph, population, offspring):
         wreplacements+=1
 
 def update_population1(graph, population, offspring):
-    # eri vs d:
-    # if d(Io,Ic) <dmin and Q(Io) >= Q(Ic), then Io replaces Ic in P;
-    # otherwise,if Q(Io) >= Q(Iw)then Io replaces Iw in P.
-    # the best will always survive
     if offspring not in population:
+        # returns the closest and furthest elements and respective ERI's
         (cm,c,wm,w)=ERI_selection(graph, population, offspring)
         if (cm[2]<offspring[2]):  
             population.remove(cm)
@@ -519,11 +529,13 @@ def results(graph):
     d_best=ERI_member(graph, best)
     d_BKR=ERI_member(graph, (rereverse(gt),gt))
     eri=ERI(d_best,d_BKR)
-    results='BESTMOD;{0};;GENS:{5};;;ERI;{1};;MUTATIONS;{2};CREPL;{3};WREPL;{4}'.format(best_q,eri,mutations,creplacements,wreplacements,generations)
+    nmi=NMI(graph,best,(None,gt))
+    results='BESTMOD;{0};;GENS:{5};;;ERI;{1};;MUTATIONS;{2};CREPL;{3};WREPL;{4};NMI;{6}'.format(best_q,eri,mutations,creplacements,wreplacements,generations,nmi)
     global results_num
     show(results)
     results_best_q.append(best_q)
     results_eri.append(eri)
+    results_nmi.append(nmi)
 
 def show(mystr):
     print mystr
@@ -538,16 +550,24 @@ def fileresults(paramsGA):
     results_best_q=list()
     global results_eri
     results_eri=list()
+    global results_nmi
+    results_nmi=list()
 
 def closefile():
     numpy_best_q=numpy.array(results_best_q)
     bestModMean=numpy.mean(numpy_best_q)
     bestModStdev=numpy.std(numpy_best_q)
+    
     numpy_eri=numpy.array(results_eri)
     eriMean=numpy.mean(numpy_eri)
     eriStdev=numpy.std(numpy_eri)
     zeros=nreps-numpy.count_nonzero(numpy_eri)
-    results='ROUND;ZEROS:{0};MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4}'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev)
+
+    numpy_nmi=numpy.array(results_nmi)
+    nmiMean=numpy.mean(numpy_nmi)
+    nmiStdev=numpy.std(numpy_eri)
+    
+    results='ROUND;ZEROS:{0};MEAN:{1};STDEV;{2};ERI;MEAN:{3};STDEV;{4};NMI;MEAN:{5};STDEV;{6};'.format(zeros,bestModMean,bestModStdev,eriMean,eriStdev,nmiMean,nmiStdev)
     show(results)
     f.close()
 
@@ -594,15 +614,14 @@ def init(graph):
 def problem(problem_name):
     graph=loadData(problem_name)                # load a graph
     for settings in xrange(len(paramsGA)):
-        fileresults(paramsGA[settings])
-        init_paramsGA(paramsGA[settings])
-        init(graph)
-        for i in xrange(0,nreps):
-            init_exec()
-            run(graph)
-            results(graph)
-        closefile()
-        print generations
+        fileresults(paramsGA[settings])         # create the results files
+        init_paramsGA(paramsGA[settings])       # initialize the GA parameters
+        init(graph)                             # load the graph for teh problem
+        for i in xrange(0,nreps):               # repeat execution nreps times
+            init_exec()                         # init counters and statistics for the exec
+            run(graph)                          # run the execution
+            results(graph)                      # calculate final results
+        closefile()                             # dump results to file
 
 def update_population(graph,population, offspring):
     update_population1(graph,population, offspring)
@@ -610,10 +629,9 @@ def update_population(graph,population, offspring):
     return total_q
 
 def main():
-    #problem(karate_club)
-    problem(dolphins)         
-    
-
+    #problem(dolphins)
+    problem(karate_club)
+             
 # This is the standard boilerplate that calls the main() function.
 if __name__ == '__main__':
     main()
